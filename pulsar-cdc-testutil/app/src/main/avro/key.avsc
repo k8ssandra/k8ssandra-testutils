@@ -1,0 +1,12 @@
+{
+    "type": "record",
+    "name": "table1key",
+    "namespace": "db1",
+    "doc": "Table db1.table1",
+    "fields": [
+      {
+        "name": "key",
+        "type": "string"
+      }
+    ]
+  }
