@@ -53,12 +53,23 @@ dependencies {
     testRuntimeOnly 'org.scala-lang.modules:scala-xml_2.13:1.2.0'
 }
 
+tasks.register('ensureDirectory') {
+        mkdir "build/docker"
+}
+
 tasks.build {
     dependsOn(generateAvroJava)
 }
 tasks.docker {
-    dependsOn(build)
+    dependsOn(installDist)
 }
+
+distributions {
+    main {
+        distributionBaseName = 'pulsar-cdc-testutil'
+    }
+}
+
 
 docker {
     name "hub.docker.com/k8ssandra/testutils:${version}"

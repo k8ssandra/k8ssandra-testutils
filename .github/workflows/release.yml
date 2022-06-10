@@ -1,0 +1,56 @@
+name: Testutils release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    # Allow to rerun this for a tag to get updated UBI-images
+
+jobs:
+  release_cass_operator:
+    name: Release Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 11
+          cache: 'gradle'
+      - name: Setup and execute Gradle 'build' task
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: |
+            docker
+            --build-file pulsar-cdc-testutil/app/build.gradle
+       - name: Login to DockerHub
+        if: ${{ !env.ACT }}
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Set git parsed values
+        if: ${{ !env.ACT }}
+        id: vars
+        shell: bash
+        run: |
+          echo ::set-output name=sha_short::$(git rev-parse --short=8 ${{ github.sha }})
+          echo ::set-output name=tag_name::${GITHUB_REF#refs/tags/}
+          echo "TARGET_VERSION=$(echo ${GITHUB_REF#refs/tags/} | awk '{print substr($0,2)}')" >> $GITHUB_ENV
+      - name: Build and push testutils
+        id: docker_build_cass-operator
+        uses: docker/build-push-action@v2
+        with:
+          file: Dockerfile
+          build-args: |
+            VERSION=${{ env.TARGET_VERSION }}
+          context: .
+          push: ${{ !env.ACT }}
+          tags: k8ssandra/testutils:${{ steps.vars.outputs.tag_name}}
+          platforms: linux/amd64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
