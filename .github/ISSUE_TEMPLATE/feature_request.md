@@ -18,10 +18,6 @@ Feel free to ask questions on Discord at https://discord.com/invite/y4s64xC9 or 
 
 **Environment**
 
-* Cass Operator version:
-
-    `Insert image tag or Git SHA here`
-    <!-- Try kubectl describe deployment cas-operator -->
-    <!-- Note: please provide operator version and not a helm chart version -->
+* Testutils version:
 
 **Anything else we need to know?**:
