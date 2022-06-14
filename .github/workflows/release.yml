@@ -20,15 +20,6 @@ jobs:
           distribution: temurin
           java-version: 11
           cache: 'gradle'
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
       - name: Setup and execute Gradle 'build' task
         uses: gradle/gradle-build-action@v2
         with:
@@ -54,4 +45,4 @@ jobs:
       - name: Push testutils
         shell: bash
         run: |
-          docker push hub.docker.com/k8ssandra/k8ssandra/testutils:${{ steps.vars.outputs.tag_name }}
+          docker push hub.docker.com/k8ssandra/testutils:${{ steps.vars.outputs.tag_name }}
