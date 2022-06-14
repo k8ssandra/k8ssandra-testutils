@@ -1,0 +1,54 @@
+{
+  "type": "record",
+  "name": "table1value",
+  "namespace": "db1",
+  "doc": "Table db1.table1",
+  "fields": [
+    {
+      "name": "c1",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    },
+    {
+      "name": "c2",
+      "type": [
+        "null",
+        "int"
+      ],
+      "default": null
+    },
+    {
+      "name": "c3",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "t1",
+          "doc": "CQL type db1.t1",
+          "fields": [
+            {
+              "name": "a",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            },
+            {
+              "name": "b",
+              "type": [
+                "null",
+                "string"
+              ],
+              "default": null
+            }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}
