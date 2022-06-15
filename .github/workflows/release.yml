@@ -42,12 +42,7 @@ jobs:
           echo ::set-output name=sha_short::$(git rev-parse --short=8 ${{ github.sha }})
           echo ::set-output name=tag_name::${GITHUB_REF#refs/tags/}
           echo "TARGET_VERSION=$(echo ${GITHUB_REF#refs/tags/} | awk '{print substr($0,2)}')" >> $GITHUB_ENV
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        with:
-          ## limits ssh access and adds the ssh public key for the user which triggered the workflow
-          limit-access-to-actor: true
       - name: Push testutils
         shell: bash
         run: |
-          docker push hub.docker.com/k8ssandra/testutils:${{ steps.vars.outputs.tag_name }}
+          docker push k8ssandra/testutils:${{ steps.vars.outputs.tag_name }}

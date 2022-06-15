@@ -73,7 +73,7 @@ distributions {
 
 
 docker {
-    name "hub.docker.com/k8ssandra/testutils:${gradle.version}"
+    name "k8ssandra/testutils:${gradle.version}"
     copySpec.from("build/install").into(".")
 //    dockerfile file('Dockerfile')
 //    files tasks.distTar.outputs, "Dockerfile"
