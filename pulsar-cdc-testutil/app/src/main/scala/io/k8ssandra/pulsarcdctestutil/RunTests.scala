@@ -110,7 +110,7 @@ class RunTests extends Callable[Int] {
       println(s"Data validation on topic failed: ${res.left.get.getMessage}")
       return ExitCode.SOFTWARE
     }
-
+    println("SUCCESS")
     ExitCode.OK
   }
 }
