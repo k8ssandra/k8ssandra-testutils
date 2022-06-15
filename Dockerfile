@@ -1,1 +1,0 @@
-FROM hub.docker.com/k8ssandra/testutils:0.0.1
