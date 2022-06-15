@@ -19,21 +19,31 @@ class RunTests extends Callable[Int] {
     description = Array("Pulsar URL.")
   )
   private var pulsarURL = "pulsar://pulsar-proxy.pulsar.svc.cluster.local:5600"
+
   @Option(
     names = Array("--schema-registry-url"),
     description = Array("Schema Registry URL.")
   )
   private var schemaRegistryURL = "pulsar://pulsar-proxy.pulsar.svc.cluster.local:5600"
+
   @Option(
     names = Array("--pulsar-admin-url"),
     description = Array("Pulsar admin URL.")
   )
-  private var pulsarAdminURL = "pulsar://pulsar-proxy.pulsar.svc.cluster.local:8080"
+  private var pulsarAdminURL = "http://pulsar-proxy.pulsar.svc.cluster.local:8080"
+
   @Option(
     names = Array("--pulsar-topic"),
     description = Array("Pulsar topic.")
   )
   private var pulsarTopic ="persistent://public/default/data-db1.table1"
+
+  @Option(
+    names = Array("--pulsar-cass-contact-point"),
+    description = Array("Pulsar's Cassandra contact points (as opposed to this application's.")
+  ) // This is needed in case the contact points available to Pulsar aren't the same as those available to this application.
+  private var PulsarCassContactPoints =cassandraContactPoints
+
   @Option(
     names = Array("--pulsar-auth-class"),
     description = Array("Pulsar Auth plugin class.")
@@ -50,16 +60,25 @@ class RunTests extends Callable[Int] {
     description = Array("Cassandra contact point.")
   )
   private var cassandraContactPoints = "cluster2-dc1-all-pods-service.default.svc.cluster.local"
+
+  @Option(
+    names = Array("--cass-dc"),
+    description = Array("Cassandra datacenter name.")
+  )
+  private var cassDCName = "dc1"
+
   @Option(
     names = Array("--cass-auth-class"),
     description = Array("Cassandra auth plugin class.")
   )
   private var cassAuthClass = ""
+
   @Option(
     names = Array("--cass-auth-parms"),
     description = Array("comma delimited Cassandra auth params.")
   )
   private var cassAuthParms = ""
+
   override def call(): Int = {
     val cassClient = CassandraOrchestrator(
       cassandraContactPoints,
@@ -74,13 +93,13 @@ class RunTests extends Callable[Int] {
       pulsarAuthParms)
 
     // Create tables in Cassandra
-    var res : Either[Throwable, _] = cassClient.migrate("dc1")
+    var res : Either[Throwable, _] = cassClient.migrate(cassDCName)
     if (res.isLeft) { println("Failed to create Cassandra schema"); return ExitCode.SOFTWARE }
 
     // Configure Pulsar connector.
     res = pulsarClient.connectorConfigure(
-      cassDC="dc1",
-      cassContactPoint="cluster2-dc1-all-pods-service.default.svc.cluster.local",
+      cassDC=cassDCName,
+      cassContactPoint=PulsarCassContactPoints,
       keyspace="db1",
       table="table1"
     )
@@ -90,7 +109,7 @@ class RunTests extends Callable[Int] {
     }
 
     // Add data to Cassandra
-    res = cassClient.addData("dc1")
+    res = cassClient.addData(cassDCName)
     if (res.isLeft) {
       println(s"Failed to add data to Cassandra: ${res.left.get.getMessage}")
       return ExitCode.SOFTWARE
