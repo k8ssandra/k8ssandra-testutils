@@ -59,7 +59,7 @@ class RunTests extends Callable[Int] {
     names = Array("--cass-contact-points"),
     description = Array("Cassandra contact point.")
   )
-  private var cassandraContactPoints = "cluster2-dc1-all-pods-service.default.svc.cluster.local"
+  private var cassandraContactPoints = "test-cluster-dc1-all-pods-servicecass-operator.svc.cluster.local:9042"
 
   @Option(
     names = Array("--cass-dc"),
