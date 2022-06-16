@@ -8,5 +8,5 @@
  */
 
 rootProject.name = 'io.k8ssandra.pulsarcdctestutil'
-gradle.ext.version = "v0.0.1"
+gradle.ext.version = "v0.0.2-SNAPSHOT"
 include('app')

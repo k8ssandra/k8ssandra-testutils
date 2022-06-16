@@ -20,3 +20,11 @@ You can use the source to learn:
 * How to write data into Cassandra using the DataStax core drivers for Apache Cassandra.
 
 The utility assumes the presence of Kubernetes, Cassandra and Pulsar clusters, you can learn how to configure these components by examining [this](https://github.com/k8ssandra/cass-operator/tree/main/test/kuttl/test-cdc) kuttl test. 
+
+# How to release
+
+Push a tag on `main`.
+
+```
+git tag --delete v0.0.2-SNAPSHOT && git tag v0.0.2-SNAPSHOT && git push --delete origin v0.0.2-SNAPSHOT && git push --tags origin v0.0.2-SNAPSHOT 
+```
