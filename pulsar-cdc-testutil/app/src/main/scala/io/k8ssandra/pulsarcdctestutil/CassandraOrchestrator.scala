@@ -72,7 +72,7 @@ case class CassandraOrchestrator(cassandraContactPoints: String, cassAuthClass: 
     val migrationStatements =
       s"""
         |DROP KEYSPACE IF EXISTS db1;
-        |CREATE KEYSPACE db1 WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', '${dc}':'3'};
+        |CREATE KEYSPACE db1 WITH REPLICATION = { 'class' : 'NetworkTopologyStrategy', '${dc}':'1'};
         |CREATE TABLE IF NOT EXISTS db1.table1 (key text PRIMARY KEY, c1 text) WITH cdc=true;
         |""".stripMargin.strip()
     if (this.sesssion.isEmpty) {
