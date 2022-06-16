@@ -1,8 +1,8 @@
 package io.k8ssandra.pulsarcdctestutil
 
-import com.sksamuel.pulsar4s.PulsarClient
 import picocli.CommandLine._
-
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 
 @Command(
@@ -18,13 +18,13 @@ class RunTests extends Callable[Int] {
     names = Array("--pulsar-url"),
     description = Array("Pulsar URL.")
   )
-  private var pulsarURL = "pulsar://pulsar-proxy.pulsar.svc.cluster.local:5600"
+  private var pulsarURL = "pulsar://pulsar-proxy.pulsar.svc.cluster.local:6650"
 
   @Option(
     names = Array("--schema-registry-url"),
     description = Array("Schema Registry URL.")
   )
-  private var schemaRegistryURL = "pulsar://pulsar-proxy.pulsar.svc.cluster.local:5600"
+  private var schemaRegistryURL = "pulsar://pulsar-proxy.pulsar.svc.cluster.local:8080"
 
   @Option(
     names = Array("--pulsar-admin-url"),
@@ -79,6 +79,8 @@ class RunTests extends Callable[Int] {
   )
   private var cassAuthParms = ""
 
+  val logger: Logger = LoggerFactory.getLogger(classOf[Nothing])
+
   override def call(): Int = {
     val cassClient = CassandraOrchestrator(
       cassandraContactPoints,
@@ -94,7 +96,7 @@ class RunTests extends Callable[Int] {
 
     // Create tables in Cassandra
     var res : Either[Throwable, _] = cassClient.migrate(cassDCName)
-    if (res.isLeft) { println("Failed to create Cassandra schema"); return ExitCode.SOFTWARE }
+    if (res.isLeft) { logger.error("Failed to create Cassandra schema"); return ExitCode.SOFTWARE }
 
     // Configure Pulsar connector.
     res = pulsarClient.connectorConfigure(
@@ -104,20 +106,20 @@ class RunTests extends Callable[Int] {
       table="table1"
     )
     if (res.isLeft) {
-      println(s"Failed to configure Pulsar connector: ${res.left.get.getMessage}")
+      logger.error(s"Failed to configure Pulsar connector: ${res.left.get.getMessage}")
       return ExitCode.SOFTWARE
     }
 
     // Add data to Cassandra
     res = cassClient.addData(cassDCName)
     if (res.isLeft) {
-      println(s"Failed to add data to Cassandra: ${res.left.get.getMessage}")
+      logger.error(s"Failed to add data to Cassandra: ${res.left.get.getMessage}")
       return ExitCode.SOFTWARE
     }
 
     val maybeData = pulsarClient.fetchData()
     if (maybeData.isLeft) {
-      println(s"Data fetch on topic failed: ${maybeData.left.get.getMessage}")
+      logger.error(s"Data fetch on topic failed: ${maybeData.left.get.getMessage}")
       return ExitCode.SOFTWARE
     }
 
@@ -126,10 +128,10 @@ class RunTests extends Callable[Int] {
     // Check data from Pulsar
     pulsarClient.checkData(data)
     if (res.isLeft) {
-      println(s"Data validation on topic failed: ${res.left.get.getMessage}")
+      logger.error(s"Data validation on topic failed: ${res.left.get.getMessage}")
       return ExitCode.SOFTWARE
     }
-    println("SUCCESS")
+    logger.info("SUCCESS")
     ExitCode.OK
   }
 }
