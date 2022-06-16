@@ -24,7 +24,7 @@ dependencies {
     // Use Scala 2.13 in our library project
     implementation 'org.scala-lang:scala-library:2.13.6'
 
-    implementation 'org.slf4j:slf4j-log4j12:1.7.36'
+    implementation 'ch.qos.logback:logback-classic:1.2.11'
 
     // Pulsar
     var pulsarVersion = "2.8.1"

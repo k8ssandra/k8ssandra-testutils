@@ -79,9 +79,11 @@ class RunTests extends Callable[Int] {
   )
   private var cassAuthParms = ""
 
-  val logger: Logger = LoggerFactory.getLogger(classOf[Nothing])
+  val logger: Logger = LoggerFactory.getLogger(classOf[RunTests])
 
   override def call(): Int = {
+    logger.info("Starting application.")
+
     val cassClient = CassandraOrchestrator(
       cassandraContactPoints,
       cassAuthClass,
