@@ -33,32 +33,37 @@ class PulsarOrchestrator(pulsarURL: String,
                          pulsarTopic: String,
                          pulsarAuthClass: String,
                          pulsarAuthParms: String) {
-
   private val client = PulsarClient(pulsarURL)
-  private val adminClient = PulsarAdmin
-    .builder()
-    .serviceHttpUrl(pulsarAdminURL)
-    // TODO enable auth, TLS.
-    .build()
+  private val adminClient = util.Try{
+      PulsarAdmin
+        .builder()
+        .serviceHttpUrl(pulsarAdminURL)
+        // TODO enable auth, TLS.
+        .build()
+    }
   implicit val schema: Schema[KeyValue[db1.table1key, db1.table1value]] =
     Schema.KeyValue(
       Schema.AVRO(classOf[db1.table1key]),
       Schema.AVRO(classOf[db1.table1value]),
       KeyValueEncodingType.SEPARATED
     )
-  private val consumer = client.consumer(
-    ConsumerConfig(Subscription("mysubs"),
-      List(Topic(pulsarTopic))
+  private val consumer = util.Try {
+      client.consumer(
+      ConsumerConfig(Subscription("mysubs"),
+        List(Topic(pulsarTopic))
+      )
     )
-  )
+  }
 
   def connectorConfigure(cassDC: String,
                          cassContactPoint: String,
                          keyspace: String,
                          table: String): Either[Throwable, Unit] = {
-
+    if (adminClient.isFailure) {
+      return Left(adminClient.toEither.left.get)
+    }
     val delResult = Try {
-      adminClient.sources().deleteSource(
+      adminClient.get.sources().deleteSource(
         "public",
         "default",
         "cassandra-source-db1-table1"
@@ -86,7 +91,7 @@ class PulsarOrchestrator(pulsarURL: String,
         ).asJava
       ).archive("builtin://cassandra-source").build()
     try {
-      adminClient
+      adminClient.get
         .sources()
         .createSource(sourceConfig, sourceConfig.getArchive)
     } catch {
@@ -110,16 +115,19 @@ class PulsarOrchestrator(pulsarURL: String,
 
   def checkData(data: Set[(db1.table1key, db1.table1value)]): Either[Throwable, Unit] = {
     if (expectedData != data || expectedData.size != data.size) {
-      return Right(())
+      return Left(new Error("Data did not match expected values."))
     }
-    Left(new Error("Data did not match expected values."))
+    return Right(())
   }
 
   def fetchData(): Either[Throwable, Set[(db1.table1key, db1.table1value)]] = {
-    consumer.seek(MessageId.earliest)
+    if (consumer.isFailure) {
+      return Left(adminClient.toEither.left.get)
+    }
+    consumer.get.seek(MessageId.earliest)
     var messageList: Set[(db1.table1key, db1.table1value)] = Set.empty
     while (true) {
-        val message = consumer.receive(duration = FiniteDuration(30, SECONDS))
+        val message = consumer.get.receive(duration = FiniteDuration(30, SECONDS))
         if (message.isFailure) {
           return Left(new Error("Error retrieving event from Pulsar"))
         } else if (message.get.isEmpty) {

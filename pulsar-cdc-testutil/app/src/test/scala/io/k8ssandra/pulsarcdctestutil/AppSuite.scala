@@ -3,13 +3,34 @@
  */
 package io.k8ssandra.pulsarcdctestutil
 
+import db1.{table1key, table1value}
 import org.scalatest.funsuite.AnyFunSuite
 import org.junit.runner.RunWith
 import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class AppSuite extends AnyFunSuite {
-//  test("App has a greeting") {
-//    assert(App.greeting() != null)
-//  }
+  test("PulsarOrchestrator has the right expectedData.") {
+    val orc = PulsarOrchestrator(
+      pulsarURL="pulsar://test-value",
+      schemaRegistryURL="https://test-value",
+      pulsarAdminURL="https://test-value",
+      pulsarTopic="dummy",
+      pulsarAuthClass="",
+      pulsarAuthParms=""
+    )
+    assert(orc.expectedData.size == 10)
+  }
+  test("PulsarOrchestrator.checkData() has the right behaviour.") {
+    val orc = PulsarOrchestrator(
+      pulsarURL="pulsar://test-value",
+      schemaRegistryURL="https://test-value",
+      pulsarAdminURL="https://test-value",
+      pulsarTopic="dummy",
+      pulsarAuthClass="",
+      pulsarAuthParms=""
+    )
+    assert(orc.checkData(orc.expectedData).isRight) // Self is always the same.
+    assert(orc.checkData(Set[(table1key, table1value)]()).isLeft) // Empty vs expected is always an error
+  }
 }
