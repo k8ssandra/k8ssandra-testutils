@@ -109,7 +109,7 @@ class PulsarOrchestrator(pulsarURL: String,
   )
 
   def checkData(data: Set[(db1.table1key, db1.table1value)]): Either[Throwable, Unit] = {
-    if (expectedData == data) {
+    if (expectedData != data) {
       return Right(())
     }
     Left(new Error("Data did not match expected values."))
