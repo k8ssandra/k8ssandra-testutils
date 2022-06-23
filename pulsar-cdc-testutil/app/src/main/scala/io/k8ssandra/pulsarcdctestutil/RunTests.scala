@@ -59,7 +59,7 @@ class RunTests extends Callable[Int] {
     names = Array("--cass-contact-points"),
     description = Array("Cassandra contact point.")
   )
-  private var cassandraContactPoints = "test-cluster-dc1-all-pods-servicecass-operator.svc.cluster.local:9042"
+  private var cassandraContactPoints = "test-cluster-dc1-all-pods-service.cass-operator.svc.cluster.local:9042"
 
   @Option(
     names = Array("--cass-dc"),
@@ -126,6 +126,9 @@ class RunTests extends Callable[Int] {
     }
 
     val data = maybeData.right.get
+
+    logger.info("Received data:")
+    logger.info(data.toString())
 
     // Check data from Pulsar
     pulsarClient.checkData(data)
