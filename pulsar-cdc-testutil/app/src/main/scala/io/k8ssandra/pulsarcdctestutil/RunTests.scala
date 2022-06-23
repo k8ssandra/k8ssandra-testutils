@@ -127,7 +127,7 @@ class RunTests extends Callable[Int] {
 
     val data = maybeData.right.get
 
-    logger.info("Received data:")
+    logger.info(s"Received data, length ${data.size}")
     logger.info(data.toString())
 
     // Check data from Pulsar
