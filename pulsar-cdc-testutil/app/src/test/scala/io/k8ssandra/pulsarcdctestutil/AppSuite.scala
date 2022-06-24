@@ -7,30 +7,26 @@ import db1.{table1key, table1value}
 import org.scalatest.funsuite.AnyFunSuite
 import org.junit.runner.RunWith
 import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.mockito.MockitoSugar._
+import org.slf4j.LoggerFactory
 
 @RunWith(classOf[JUnitRunner])
 class AppSuite extends AnyFunSuite {
-  test("PulsarOrchestrator has the right expectedData.") {
-    val orc = PulsarOrchestrator(
-      pulsarURL="pulsar://test-value",
-      schemaRegistryURL="https://test-value",
-      pulsarAdminURL="https://test-value",
-      pulsarTopic="dummy",
-      pulsarAuthClass="",
-      pulsarAuthParms=""
-    )
-    assert(orc.expectedData.size == 10)
+  val mockLogger = LoggerFactory.getLogger(classOf[AppSuite])
+
+  val mockPulsarClients = mock[PulsarClients]
+  val pulsarOrchestrator = PulsarOrchestrator(mockPulsarClients)
+
+  val mockCassClients = mock[CassandraClients]
+  val cassandraOrchestrator = CassandraOrchestrator(mockCassClients)
+  val tester = DataTester(cassandraOrchestrator, pulsarOrchestrator, mockLogger)
+
+  test("DataTester has the right expectedData.") {
+      assert(tester.expectedData.size == 10)
   }
-  test("PulsarOrchestrator.checkData() has the right behaviour.") {
-    val orc = PulsarOrchestrator(
-      pulsarURL="pulsar://test-value",
-      schemaRegistryURL="https://test-value",
-      pulsarAdminURL="https://test-value",
-      pulsarTopic="dummy",
-      pulsarAuthClass="",
-      pulsarAuthParms=""
-    )
-    assert(orc.checkData(orc.expectedData).isRight) // Self is always the same.
-    assert(orc.checkData(Set[(table1key, table1value)]()).isLeft) // Empty vs expected is always an error
+
+  test("DataTester.checkData() has the right behaviour.") {
+    assert(tester.checkData(tester.expectedData).isRight) // Self is always the same.
+    assert(tester.checkData(Set[(table1key, table1value)]()).isLeft) // Empty vs expected is always an error
   }
 }

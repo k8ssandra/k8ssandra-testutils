@@ -1,69 +1,32 @@
 package io.k8ssandra.pulsarcdctestutil
 
-import com.sksamuel.pulsar4s.{ConsumerConfig, MessageId, PulsarClient, Subscription, Topic}
+
 import org.apache.pulsar.client.api.Schema
-import org.apache.pulsar.common.schema.{KeyValue, KeyValueEncodingType}
 import org.apache.pulsar.client.admin.PulsarAdmin
 import org.apache.pulsar.client.admin.PulsarAdminException.NotFoundException
+import org.apache.pulsar.common.schema.{KeyValue, KeyValueEncodingType}
 import org.apache.pulsar.common.io.SourceConfig
-
-import scala.jdk.CollectionConverters._
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
-import scala.util.{Failure, Try}
+import scala.jdk.CollectionConverters._
+import scala.util.Try
+import com.sksamuel.pulsar4s.{ConsumerConfig, MessageId, PulsarClient, Subscription, Topic}
 
 object PulsarOrchestrator {
-  def apply(pulsarURL: String,
-            schemaRegistryURL: String,
-            pulsarAdminURL: String,
-            pulsarTopic: String,
-            pulsarAuthClass: String,
-            pulsarAuthParms: String): PulsarOrchestrator = {
-    new PulsarOrchestrator(pulsarURL: String,
-      schemaRegistryURL: String,
-      pulsarAdminURL: String,
-      pulsarTopic: String,
-      pulsarAuthClass: String,
-      pulsarAuthParms: String)
+  def apply(pulsarClients: PulsarClients): PulsarOrchestrator = {
+    new PulsarOrchestrator(pulsarClients: PulsarClients)
   }
 }
 
-class PulsarOrchestrator(pulsarURL: String,
-                         schemaRegistryURL: String,
-                         pulsarAdminURL: String,
-                         pulsarTopic: String,
-                         pulsarAuthClass: String,
-                         pulsarAuthParms: String) {
-  private val client = PulsarClient(pulsarURL)
-  private val adminClient = util.Try{
-      PulsarAdmin
-        .builder()
-        .serviceHttpUrl(pulsarAdminURL)
-        // TODO enable auth, TLS.
-        .build()
-    }
-  implicit val schema: Schema[KeyValue[db1.table1key, db1.table1value]] =
-    Schema.KeyValue(
-      Schema.AVRO(classOf[db1.table1key]),
-      Schema.AVRO(classOf[db1.table1value]),
-      KeyValueEncodingType.SEPARATED
-    )
-  private val consumer = util.Try {
-      client.consumer(
-      ConsumerConfig(Subscription("mysubs"),
-        List(Topic(pulsarTopic))
-      )
-    )
-  }
-
+class PulsarOrchestrator(pulsarClients: PulsarClients) {
   def connectorConfigure(cassDC: String,
                          cassContactPoint: String,
                          keyspace: String,
                          table: String): Either[Throwable, Unit] = {
-    if (adminClient.isFailure) {
-      return Left(adminClient.toEither.left.get)
+    if (pulsarClients.adminClient.isFailure) {
+      return Left(pulsarClients.adminClient.toEither.left.get)
     }
     val delResult = Try {
-      adminClient.get.sources().deleteSource(
+      pulsarClients.adminClient.get.sources().deleteSource(
         "public",
         "default",
         "cassandra-source-db1-table1"
@@ -91,7 +54,7 @@ class PulsarOrchestrator(pulsarURL: String,
         ).asJava
       ).archive("builtin://cassandra-source").build()
     try {
-      adminClient.get
+      pulsarClients.adminClient.get
         .sources()
         .createSource(sourceConfig, sourceConfig.getArchive)
     } catch {
@@ -100,34 +63,14 @@ class PulsarOrchestrator(pulsarURL: String,
       Right(())
   }
 
-  val expectedData: Set[(db1.table1key, db1.table1value)] = Set[(db1.table1key, db1.table1value)](
-    (db1.table1key.newBuilder.setKey("9").build(), db1.table1value.newBuilder().setC1("bob").setC2(1).setC3(db1.t1.newBuilder().setA("a").setB("b").build()).build()),
-    (db1.table1key.newBuilder.setKey("1").build(), null),
-    (db1.table1key.newBuilder.setKey("10").build(), db1.table1value.newBuilder().setC1("bob").setC2(1).setC3(db1.t1.newBuilder().setA("a").setB("b").build()).build()),
-    (db1.table1key.newBuilder.setKey("7").build(), db1.table1value.newBuilder().setC1("bob").setC2(1).setC3(db1.t1.newBuilder().setA("a").setB("b").build()).build()),
-    (db1.table1key.newBuilder.setKey("0").build(), db1.table1value.newBuilder().setC1("bob2").setC2(null).setC3(null).build()),
-    (db1.table1key.newBuilder.setKey("5").build(), db1.table1value.newBuilder().setC1("bob").setC2(1).setC3(db1.t1.newBuilder().setA("a").setB("b").build()).build()),
-    (db1.table1key.newBuilder.setKey("8").build(), db1.table1value.newBuilder().setC1("bob").setC2(1).setC3(db1.t1.newBuilder().setA("a").setB("b").build()).build()),
-    (db1.table1key.newBuilder.setKey("3").build(), db1.table1value.newBuilder().setC1("bob").setC2(1).setC3(db1.t1.newBuilder().setA("a").setB("b").build()).build()),
-    (db1.table1key.newBuilder.setKey("6").build(), db1.table1value.newBuilder().setC1("bob").setC2(1).setC3(db1.t1.newBuilder().setA("a").setB("b").build()).build()),
-    (db1.table1key.newBuilder.setKey("4").build(), db1.table1value.newBuilder().setC1("bob").setC2(1).setC3(db1.t1.newBuilder().setA("a").setB("b").build()).build()),
-  )
-
-  def checkData(data: Set[(db1.table1key, db1.table1value)]): Either[Throwable, Unit] = {
-    if (expectedData != data || expectedData.size != data.size) {
-      return Left(new Error("Data did not match expected values."))
-    }
-    return Right(())
-  }
-
   def fetchData(): Either[Throwable, Set[(db1.table1key, db1.table1value)]] = {
-    if (consumer.isFailure) {
-      return Left(adminClient.toEither.left.get)
+    if (pulsarClients.consumer.isFailure) {
+      return Left(pulsarClients.adminClient.toEither.left.get)
     }
-    consumer.get.seek(MessageId.earliest)
+    pulsarClients.consumer.get.seek(MessageId.earliest)
     var messageList: Set[(db1.table1key, db1.table1value)] = Set.empty
     while (true) {
-        val message = consumer.get.receive(duration = FiniteDuration(30, SECONDS))
+        val message = pulsarClients.consumer.get.receive(duration = FiniteDuration(30, SECONDS))
         if (message.isFailure) {
           return Left(new Error("Error retrieving event from Pulsar"))
         } else if (message.get.isEmpty) {

@@ -20,6 +20,7 @@ repositories {
     mavenCentral()
 }
 
+
 dependencies {
     // Use Scala 2.13 in our library project
     implementation 'org.scala-lang:scala-library:2.13.6'
@@ -49,11 +50,15 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.scalatest:scalatest_2.13:3.2.9'
     testImplementation 'org.scalatestplus:junit-4-13_2.13:3.2.2.0'
+    testImplementation 'org.mockito:mockito-scala-scalatest_2.13:1.17.7'
+    testImplementation 'org.scalatestplus:mockito-4-5_2.13:3.2.12.0'
+
+
+
 
     // Need scala-xml at test runtime
     testRuntimeOnly 'org.scala-lang.modules:scala-xml_2.13:1.2.0'
 }
-
 tasks.register('ensureDirectory') {
         mkdir "build/docker"
 }
