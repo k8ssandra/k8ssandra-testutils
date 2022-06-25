@@ -1,10 +1,8 @@
 package io.k8ssandra.pulsarcdctestutil
 
 
-import org.apache.pulsar.client.api.Schema
-import org.apache.pulsar.client.admin.PulsarAdmin
+
 import org.apache.pulsar.client.admin.PulsarAdminException.NotFoundException
-import org.apache.pulsar.common.schema.{KeyValue, KeyValueEncodingType}
 import org.apache.pulsar.common.io.SourceConfig
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.jdk.CollectionConverters._
@@ -18,14 +16,11 @@ object PulsarOrchestrator {
 }
 
 class PulsarOrchestrator(pulsarClients: PulsarClients) {
-  def connectorConfigure(cassDC: String,
-                         cassContactPoint: String,
-                         keyspace: String,
-                         table: String): Either[Throwable, Unit] = {
+  def cleanup(): Either[Throwable, Unit] =  {
     if (pulsarClients.adminClient.isFailure) {
       return Left(pulsarClients.adminClient.toEither.left.get)
     }
-    val delResult = Try {
+    val delResult = util.Try {
       pulsarClients.adminClient.get.sources().deleteSource(
         "public",
         "default",
@@ -35,7 +30,26 @@ class PulsarOrchestrator(pulsarClients: PulsarClients) {
     if (delResult.isFailure && !delResult.failed.get.isInstanceOf[NotFoundException]) {
       return delResult.toEither
     }
+    val delTopicResult = util.Try {
+      // TODO: these should both be configurable.
+      pulsarClients.adminClient.get.topics().delete("persistent://public/default/events-db1.table1", true, true)
+      pulsarClients.adminClient.get.topics().delete("persistent://public/default/data-db1.table1",true, true)
+    }
+    if (delTopicResult.isFailure && !delTopicResult.failed.get.isInstanceOf[NotFoundException]) {
+      return delResult.toEither
+    }
+    return Right(())
+  }
 
+  def connectorConfigure(cassDC: String,
+                         cassContactPoint: String,
+                         keyspace: String,
+                         table: String): Either[Throwable, Unit] = {
+
+    val cleanupResult = cleanup()
+    if (cleanupResult.isLeft) {
+      return cleanupResult
+    }
     val sourceConfig = SourceConfig
       .builder()
       .tenant("public")
