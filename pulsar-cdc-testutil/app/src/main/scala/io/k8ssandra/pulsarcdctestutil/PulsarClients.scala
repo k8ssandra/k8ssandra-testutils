@@ -12,8 +12,8 @@ object PulsarClients {
 }
 // PulsarClients knows how to create Pulsar client connections.
 class PulsarClients(pulsarURL: String, pulsarAdminURL: String, pulsarTopic: String) {
-  val client = PulsarClient(pulsarURL)
-  val adminClient = util.Try{
+  lazy val client = PulsarClient(pulsarURL)
+  lazy val adminClient = util.Try{
     PulsarAdmin // TODO enable auth, TLS.
       .builder()
       .serviceHttpUrl(pulsarAdminURL)
@@ -25,7 +25,7 @@ class PulsarClients(pulsarURL: String, pulsarAdminURL: String, pulsarTopic: Stri
       Schema.AVRO(classOf[db1.table1value]),
       KeyValueEncodingType.SEPARATED
     )
-  val consumer = util.Try {
+  lazy val consumer = util.Try {
     client.consumer(
       ConsumerConfig(Subscription("mysubs"),
         List(Topic(pulsarTopic))

@@ -56,6 +56,7 @@ class PulsarOrchestrator(pulsarClients: PulsarClients) {
       .namespace("default")
       .name("cassandra-source-db1-table1")
       .topicName("data-db1.table1")
+      .archive("builtin://cassandra-source")
       .configs(
         Map[String, AnyRef](
           "keyspace" -> keyspace,
@@ -66,7 +67,7 @@ class PulsarOrchestrator(pulsarClients: PulsarClients) {
           "loadBalancing.localDc" -> cassDC,
           "auth.provider" -> "None" // TODO: Implement Cassandra auth.
         ).asJava
-      ).archive("builtin://cassandra-source").build()
+      ).build()
     try {
       pulsarClients.adminClient.get
         .sources()
