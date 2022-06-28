@@ -38,6 +38,8 @@ class DataTester(cassandraOrchestrator: CassandraOrchestrator, pulsarOrchestrato
       res.left.map(m => logger.error(s"Failed to create Cassandra schema: ${m.getMessage}"))
       return res.left.toOption
     }
+    logger.info("Waiting 20 seconds....")
+    Thread.sleep(2000)
 
    // Configure Pulsar connector.
     res = pulsarOrchestrator.connectorConfigure(
@@ -50,6 +52,8 @@ class DataTester(cassandraOrchestrator: CassandraOrchestrator, pulsarOrchestrato
       res.left.map(m => logger.error(s"Failed to configure Pulsar connector: ${m.getMessage}"))
       return res.left.toOption
     }
+    logger.info("Waiting 20 seconds....")
+    Thread.sleep(2000)
 
    // Add data to Cassandra
     res = cassandraOrchestrator.addData(cassDCName, cqlStatements)
@@ -57,6 +61,8 @@ class DataTester(cassandraOrchestrator: CassandraOrchestrator, pulsarOrchestrato
       res.left.map(m => logger.error(s"Failed to add data to Cassandra: ${m.getMessage}"))
       return res.left.toOption
     }
+    logger.info("Waiting 20 seconds....")
+    Thread.sleep(2000)
 
     // Fetch data from Pulsar
     val maybeData = pulsarOrchestrator.fetchData()
